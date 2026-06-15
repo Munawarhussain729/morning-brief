@@ -27,11 +27,11 @@ const briefSchema = z.object({
 
 function sectionItemSchema() {
   return z.object({
-    articleId: z.string().optional(),
+    articleId: z.string().nullable().optional().transform((value) => value ?? undefined),
     title: z.string(),
     summary: z.string(),
     whyItMatters: z.string(),
-    url: z.string().optional(),
+    url: z.string().nullable().optional().transform((value) => value ?? undefined),
     tags: z.array(z.string())
   });
 }
@@ -43,6 +43,86 @@ function contentIdeaSchema() {
   });
 }
 
+const sectionItemJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["articleId", "title", "summary", "whyItMatters", "url", "tags"],
+  properties: {
+    articleId: { anyOf: [{ type: "string" }, { type: "null" }] },
+    title: { type: "string" },
+    summary: { type: "string" },
+    whyItMatters: { type: "string" },
+    url: { anyOf: [{ type: "string" }, { type: "null" }] },
+    tags: {
+      type: "array",
+      items: { type: "string" }
+    }
+  }
+};
+
+const contentIdeaJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "angle"],
+  properties: {
+    title: { type: "string" },
+    angle: { type: "string" }
+  }
+};
+
+const alertJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "body", "severity"],
+  properties: {
+    title: { type: "string" },
+    body: { type: "string" },
+    severity: { type: "string", enum: ["info", "important", "critical"] }
+  }
+};
+
+const briefResponseFormat = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "morning_brief",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "overview", "sections", "linkedin", "alerts"],
+      properties: {
+        title: { type: "string" },
+        overview: { type: "string" },
+        sections: {
+          type: "object",
+          additionalProperties: false,
+          required: ["ai", "development", "cybersecurity", "trendingTools", "learning"],
+          properties: {
+            ai: { type: "array", maxItems: 5, items: sectionItemJsonSchema },
+            development: { type: "array", maxItems: 5, items: sectionItemJsonSchema },
+            cybersecurity: { type: "array", maxItems: 5, items: sectionItemJsonSchema },
+            trendingTools: { type: "array", maxItems: 8, items: sectionItemJsonSchema },
+            learning: { type: "array", maxItems: 8, items: sectionItemJsonSchema }
+          }
+        },
+        linkedin: {
+          type: "object",
+          additionalProperties: false,
+          required: ["articles", "posts"],
+          properties: {
+            articles: { type: "array", minItems: 3, maxItems: 3, items: contentIdeaJsonSchema },
+            posts: { type: "array", minItems: 3, maxItems: 3, items: contentIdeaJsonSchema }
+          }
+        },
+        alerts: {
+          type: "array",
+          items: alertJsonSchema
+        }
+      }
+    }
+  }
+};
+
 export class OpenAiSummarizer {
   private readonly client?: OpenAI;
 
@@ -52,19 +132,22 @@ export class OpenAiSummarizer {
 
   async generate(candidates: CandidateArticle[]): Promise<GeneratedBrief> {
     if (!this.client) {
-      return fallbackBrief(candidates);
+      return fallbackBrief(
+        candidates,
+        "OpenAI API key is not configured, so this deterministic brief ranks recent articles without LLM synthesis."
+      );
     }
 
     try {
       const response = await this.client.chat.completions.create({
         model: env.OPENAI_MODEL,
         temperature: 0.2,
-        response_format: { type: "json_object" },
+        response_format: briefResponseFormat,
         messages: [
           {
             role: "system",
             content:
-              "You generate terse, high-signal morning briefings for a senior software engineer and team lead. Remove duplicates, marketing announcements, low-value roundups, and minor posts. Prioritize AI engineering, Next.js, React, TypeScript, Node.js backend development, startup/product development, cybersecurity, and Hack The Box learning."
+              "You generate terse, high-signal morning briefings for a senior software engineer and team lead. Remove duplicates, marketing announcements, low-value roundups, and minor posts. Prioritize AI engineering, Next.js, React, TypeScript, Node.js backend development, startup/product development, cybersecurity, and Hack The Box learning. Return only data that matches the required schema. Use null for unavailable articleId or url values."
           },
           {
             role: "user",
@@ -101,12 +184,15 @@ export class OpenAiSummarizer {
       return briefSchema.parse(JSON.parse(content));
     } catch (error) {
       logger.warn("OpenAI summarization failed; using deterministic fallback brief", error);
-      return fallbackBrief(candidates);
+      return fallbackBrief(
+        candidates,
+        "OpenAI summarization failed, so this deterministic brief ranks recent articles without LLM synthesis."
+      );
     }
   }
 }
 
-function fallbackBrief(candidates: CandidateArticle[]): GeneratedBrief {
+function fallbackBrief(candidates: CandidateArticle[], overview: string): GeneratedBrief {
   const byCategory = (category: string) =>
     candidates
       .filter((candidate) => candidate.category === category)
@@ -122,7 +208,7 @@ function fallbackBrief(candidates: CandidateArticle[]): GeneratedBrief {
 
   return {
     title: "Today's Morning Brief",
-    overview: "OpenAI API key is not configured, so this deterministic brief ranks recent articles without LLM synthesis.",
+    overview,
     sections: {
       ai: byCategory("AI"),
       development: byCategory("DEVELOPMENT"),

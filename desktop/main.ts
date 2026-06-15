@@ -106,6 +106,11 @@ async function waitForServer(url: string): Promise<void> {
 
 function configureDatabasePath(): void {
   if (process.env.DATABASE_URL) return;
+  if (!app.isPackaged) {
+    process.env.DATABASE_URL = "file:./dev.db";
+    return;
+  }
+
   const databasePath = path.join(app.getPath("userData"), "morning-brief.db");
   process.env.DATABASE_URL = `file:${databasePath}`;
 }

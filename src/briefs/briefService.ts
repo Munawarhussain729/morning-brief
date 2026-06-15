@@ -2,7 +2,7 @@ import { startOfDay, subHours } from "date-fns";
 import type { PrismaClient } from "@prisma/client";
 import { env } from "@/src/config/env";
 import { OpenAiSummarizer } from "@/src/summarization/openAiSummarizer";
-import type { GeneratedBriefItem } from "@/src/summarization/types";
+import type { CandidateArticle, GeneratedBrief, GeneratedBriefItem } from "@/src/summarization/types";
 
 type BriefSection = "AI" | "DEVELOPMENT" | "CYBERSECURITY" | "TRENDING_TOOLS" | "LEARNING";
 
@@ -32,17 +32,20 @@ export class BriefService {
       take: 80
     });
 
-    const generated = await this.summarizer.generate(
-      candidates.map((article) => ({
-        id: article.id,
-        category: article.category,
-        title: article.title,
-        url: article.url,
-        source: article.source.name,
-        summary: article.rawSummary,
-        relevanceScore: article.relevanceScore,
-        publishedAt: article.publishedAt
-      }))
+    const candidateArticles: CandidateArticle[] = candidates.map((article) => ({
+      id: article.id,
+      category: article.category,
+      title: article.title,
+      url: article.url,
+      source: article.source.name,
+      summary: article.rawSummary,
+      relevanceScore: article.relevanceScore,
+      publishedAt: article.publishedAt
+    }));
+
+    const generated = this.removeUnknownArticleIds(
+      await this.summarizer.generate(candidateArticles),
+      new Set(candidateArticles.map((article) => article.id))
     );
 
     const briefDate = startOfDay(new Date());
@@ -120,5 +123,24 @@ export class BriefService {
         tags: JSON.stringify(item.tags)
       }))
     });
+  }
+
+  private removeUnknownArticleIds(generated: GeneratedBrief, candidateIds: Set<string>): GeneratedBrief {
+    const normalizeItems = (items: GeneratedBriefItem[]) =>
+      items.map((item) => ({
+        ...item,
+        articleId: item.articleId && candidateIds.has(item.articleId) ? item.articleId : undefined
+      }));
+
+    return {
+      ...generated,
+      sections: {
+        ai: normalizeItems(generated.sections.ai),
+        development: normalizeItems(generated.sections.development),
+        cybersecurity: normalizeItems(generated.sections.cybersecurity),
+        trendingTools: normalizeItems(generated.sections.trendingTools),
+        learning: normalizeItems(generated.sections.learning)
+      }
+    };
   }
 }
