@@ -1,3 +1,6 @@
+<img width="1183" height="821" alt="morning-brief" src="https://github.com/user-attachments/assets/1d0e0734-c8af-469f-95d1-982b72178121" />
+
+
 # Morning Brief
 
 Morning Brief is a macOS desktop app for staying current on AI, software development, cybersecurity, trending tools, and learning opportunities without checking multiple platforms every day.
