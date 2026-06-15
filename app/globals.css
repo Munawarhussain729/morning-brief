@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  background: #eef2f6;
+}
+
+.dark {
+  color-scheme: dark;
+  background: #15191f;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.76), rgba(238,242,246,0.96)),
+    #eef2f6;
+  color: #15191f;
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+
+.dark body {
+  background:
+    linear-gradient(180deg, rgba(21,25,31,0.92), rgba(36,41,51,0.96)),
+    #15191f;
+  color: #f8fafc;
+}
+
+button,
+input {
+  font: inherit;
+}

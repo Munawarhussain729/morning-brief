@@ -1,0 +1,84 @@
+{
+  "name": "morning-brief",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI and tech morning brief for macOS.",
+  "main": "dist-electron/desktop/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"next dev\" \"npm run dev:electron\"",
+    "dev:next": "next dev",
+    "dev:electron": "npm run build:electron && wait-on http://localhost:3000 && electron .",
+    "build": "prisma generate && next build && node scripts/prepare-standalone.mjs && tsc -p tsconfig.electron.json && tsc-alias -p tsconfig.electron.json && electron-builder",
+    "build:next": "next build && node scripts/prepare-standalone.mjs",
+    "build:electron": "tsc -p tsconfig.electron.json && tsc-alias -p tsconfig.electron.json",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "refresh": "tsx scripts/refresh.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "better-sqlite3": "^11.7.0",
+    "date-fns": "^4.1.0",
+    "electron-log": "^5.2.4",
+    "electron-store": "^10.0.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.1.0",
+    "node-cron": "^3.0.3",
+    "openai": "^4.77.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rss-parser": "^3.13.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.10.2",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.4.49",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.17",
+    "tsc-alias": "^1.8.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.morningbrief.desktop",
+    "productName": "Morning Brief",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      ".next/**/*",
+      ".next/standalone/**/*",
+      ".next/static/**/*",
+      "dist-electron/**/*",
+      "public/**/*",
+      "package.json",
+      "prisma/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.news",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    }
+  }
+}

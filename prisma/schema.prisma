@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  url         String
+  category    String
+  enabled     Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  articles    Article[]
+}
+
+model Article {
+  id              String          @id @default(cuid())
+  sourceId        String
+  source          Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  category        String
+  title           String
+  url             String          @unique
+  author          String?
+  publishedAt     DateTime?
+  fetchedAt       DateTime        @default(now())
+  rawSummary      String?
+  contentHash     String
+  relevanceScore  Float           @default(0)
+  importanceScore Float           @default(0)
+  duplicateOfId   String?
+  isMarketing     Boolean         @default(false)
+  isLowValue      Boolean         @default(false)
+  tags            String          @default("[]")
+  briefItems      BriefItem[]
+
+  @@index([category, publishedAt])
+  @@index([relevanceScore])
+  @@index([contentHash])
+}
+
+model DailyBrief {
+  id          String      @id @default(cuid())
+  briefDate   DateTime    @unique
+  title       String
+  overview    String
+  model       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       BriefItem[]
+  ideas       ContentIdea[]
+}
+
+model BriefItem {
+  id          String       @id @default(cuid())
+  briefId     String
+  brief       DailyBrief   @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  articleId   String?
+  article     Article?     @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  section     String
+  rank        Int
+  title       String
+  summary     String
+  whyItMatters String
+  url         String?
+  tags        String       @default("[]")
+
+  @@index([briefId, section, rank])
+}
+
+model ContentIdea {
+  id          String       @id @default(cuid())
+  briefId     String
+  brief       DailyBrief   @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  kind        String
+  title       String
+  angle       String
+  createdAt   DateTime     @default(now())
+
+  @@index([briefId, kind])
+}
+
+model RefreshRun {
+  id          String    @id @default(cuid())
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  status      String
+  articlesSeen Int      @default(0)
+  articlesStored Int    @default(0)
+  error       String?
+}
