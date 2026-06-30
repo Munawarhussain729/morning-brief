@@ -19,10 +19,21 @@ export async function fetchRssSource(source: NewsSourceConfig): Promise<Ingested
     category: source.category,
     title: item.title?.trim() || "Untitled update",
     url: item.link || item.guid || source.url,
-    author: item.creator || item.author,
+    author: normalizeAuthor(item.creator || item.author),
     publishedAt: item.isoDate ? new Date(item.isoDate) : item.pubDate ? new Date(item.pubDate) : undefined,
     rawSummary: stripHtml(item.contentSnippet || item.content || item.summary || "")
   }));
+}
+
+function normalizeAuthor(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === "string") return value.trim() || undefined;
+  if (Array.isArray(value)) return value.map(normalizeAuthor).filter(Boolean).join(", ") || undefined;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return normalizeAuthor(record.name || record.email || record.url);
+  }
+  return String(value).trim() || undefined;
 }
 
 function stripHtml(value: string): string {
