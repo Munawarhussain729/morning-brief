@@ -86,6 +86,20 @@ npm run dev:next
 
 Then open `http://localhost:3000`.
 
+## Mobile App
+
+A React Native CLI mobile client is available in `mobile/`. It uses the existing Next.js API routes, so keep the desktop/web backend running and configure `mobile/src/config.ts` for your emulator or phone.
+
+```bash
+cd mobile
+npm install
+npm run android
+# or
+npm run ios
+```
+
+See `mobile/README.md` for physical device setup, release build notes, and API URL details.
+
 ## Generating A Brief
 
 Run a refresh from the UI or use:

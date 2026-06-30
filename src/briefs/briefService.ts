@@ -43,9 +43,9 @@ export class BriefService {
       publishedAt: article.publishedAt
     }));
 
-    const generated = this.removeUnknownArticleIds(
+    const generated = this.enrichGeneratedBrief(
       await this.summarizer.generate(candidateArticles),
-      new Set(candidateArticles.map((article) => article.id))
+      new Map(candidateArticles.map((article) => [article.id, article]))
     );
 
     const briefDate = startOfDay(new Date());
@@ -125,12 +125,18 @@ export class BriefService {
     });
   }
 
-  private removeUnknownArticleIds(generated: GeneratedBrief, candidateIds: Set<string>): GeneratedBrief {
+  private enrichGeneratedBrief(generated: GeneratedBrief, candidatesById: Map<string, CandidateArticle>): GeneratedBrief {
     const normalizeItems = (items: GeneratedBriefItem[]) =>
-      items.map((item) => ({
-        ...item,
-        articleId: item.articleId && candidateIds.has(item.articleId) ? item.articleId : undefined
-      }));
+      items.map((item) => {
+        const article = item.articleId ? candidatesById.get(item.articleId) : undefined;
+        return {
+          ...item,
+          articleId: article ? article.id : undefined,
+          url: item.url ?? article?.url,
+          summary: expandThinSummary(item.summary, article?.summary),
+          tags: Array.from(new Set([...item.tags, ...(article ? [article.source] : [])]))
+        };
+      });
 
     return {
       ...generated,
@@ -143,4 +149,12 @@ export class BriefService {
       }
     };
   }
+}
+
+function expandThinSummary(summary: string, sourceSummary?: string | null): string {
+  const cleanSourceSummary = sourceSummary?.trim();
+  if (!cleanSourceSummary) return summary;
+  if (summary.length >= 180) return summary;
+  if (summary.toLowerCase().includes(cleanSourceSummary.slice(0, 60).toLowerCase())) return summary;
+  return `${summary} Source context: ${cleanSourceSummary}`;
 }

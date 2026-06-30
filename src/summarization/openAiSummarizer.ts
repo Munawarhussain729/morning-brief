@@ -154,6 +154,8 @@ export class OpenAiSummarizer {
             content: JSON.stringify({
               instructions: {
                 output: "Strict JSON matching title, overview, sections, linkedin, alerts.",
+                summaryStyle:
+                  "For every news/tool item, write a concrete 2-3 sentence summary that includes what happened, who/what it affects, and the most relevant source detail. Do not write vague summaries like 'new update detected'.",
                 sectionLimits: {
                   ai: 5,
                   development: 5,
@@ -200,8 +202,10 @@ function fallbackBrief(candidates: CandidateArticle[], overview: string): Genera
       .map((candidate) => ({
         articleId: candidate.id,
         title: candidate.title,
-        summary: candidate.summary || "New update detected from a tracked source.",
-        whyItMatters: "Review this because it matches your configured engineering and security interests.",
+        summary: candidate.summary
+          ? `${candidate.summary}`
+          : `${candidate.source} published this update. Open the source link for the full context while Morning Brief continues tracking related signals.`,
+        whyItMatters: whyItMattersFor(candidate),
         url: candidate.url,
         tags: [candidate.source]
       }));
@@ -216,8 +220,10 @@ function fallbackBrief(candidates: CandidateArticle[], overview: string): Genera
       trendingTools: candidates.filter((candidate) => candidate.category === "TRENDING_TOOLS").slice(0, 8).map((candidate) => ({
         articleId: candidate.id,
         title: candidate.title,
-        summary: candidate.summary || "Tool or repository worth reviewing.",
-        whyItMatters: "Potentially useful for engineering, product, or automation workflows.",
+        summary: candidate.summary
+          ? `${candidate.summary}`
+          : `${candidate.source} surfaced this tool or repository as a current trend. Open the source link to inspect use cases, maturity, and fit for your workflow.`,
+        whyItMatters: whyItMattersFor(candidate),
         url: candidate.url,
         tags: [candidate.source]
       })),
@@ -250,4 +256,17 @@ function fallbackBrief(candidates: CandidateArticle[], overview: string): Genera
     },
     alerts: []
   };
+}
+
+function whyItMattersFor(candidate: CandidateArticle): string {
+  if (candidate.category === "CYBERSECURITY") {
+    return "Useful for vulnerability awareness, defensive prioritization, and deciding what deserves deeper lab practice or team follow-up.";
+  }
+  if (candidate.category === "AI") {
+    return "Relevant to AI engineering direction, agent workflows, model capability changes, or product opportunities worth evaluating.";
+  }
+  if (candidate.category === "DEVELOPMENT") {
+    return "Relevant to framework, runtime, or tooling decisions that can affect delivery speed, architecture, or developer experience.";
+  }
+  return "Potentially useful for engineering, product, automation, or startup workflow experiments.";
 }

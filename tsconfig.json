@@ -37,12 +37,22 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "global.d.ts",
+    "next.config.ts",
+    "tailwind.config.ts",
+    "vitest.config.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist-electron"
+    "dist-electron",
+    "mobile"
   ]
 }

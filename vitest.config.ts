@@ -4,6 +4,7 @@ import path from "node:path";
 export default defineConfig({
   cacheDir: "/private/tmp/morning-brief-vitest-cache",
   test: {
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     environment: "node",
     globals: false
   },

@@ -395,7 +395,14 @@ function BriefCard({ item, onOpen, onOpenUrl }: { item: BriefItem; onOpen: () =>
       </div>
 
       <h4 className="text-lg font-semibold leading-7 tracking-tight group-hover:text-signal dark:group-hover:text-teal-300">{item.title}</h4>
-      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{item.summary}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">{item.summary}</p>
+
+      {item.article?.rawSummary && !item.summary.includes(item.article.rawSummary.slice(0, 80)) ? (
+        <div className="mt-4 rounded-2xl bg-black/[0.03] p-3 text-sm leading-6 text-slate-600 dark:bg-white/10 dark:text-slate-300">
+          <span className="font-semibold text-slate-700 dark:text-slate-100">Source context: </span>
+          {excerpt(item.article.rawSummary, 520)}
+        </div>
+      ) : null}
 
       <div className="mt-4 rounded-2xl bg-amberline/10 p-3 text-sm leading-6 text-slate-700 dark:text-slate-200">
         <span className="font-semibold text-amberline">Why it matters: </span>
@@ -474,7 +481,7 @@ function DetailDrawer({ item, onClose, onOpenUrl }: { item: BriefItem | null; on
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => void onOpenUrl(item.url)}
+            onClick={() => void onOpenUrl(item.url ?? item.article?.url)}
             className="inline-flex items-center gap-2 rounded-2xl bg-signal px-5 py-3 text-sm font-semibold text-white"
           >
             Open Source <ExternalLink size={16} />
@@ -572,6 +579,11 @@ function formatDate(value?: string | null): string {
 function formatScore(value?: number): string {
   if (typeof value !== "number") return "Not scored";
   return `${Math.round(value * 10) / 10}/10`;
+}
+
+function excerpt(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength).trim()}...`;
 }
 
 function isUrgent(item: BriefItem): boolean {
