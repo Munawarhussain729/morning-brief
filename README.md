@@ -54,6 +54,8 @@ Update `.env` with your own values:
 DATABASE_URL="file:./dev.db"
 OPENAI_API_KEY="your-openai-api-key"
 OPENAI_MODEL="gpt-4.1-mini"
+X_BEARER_TOKEN="your-x-api-bearer-token"
+X_MAX_RESULTS="25"
 MORNING_BRIEF_REFRESH_CRON="0 7 * * *"
 MORNING_BRIEF_TIMEZONE="Asia/Karachi"
 MORNING_BRIEF_LOOKBACK_HOURS="24"
@@ -173,6 +175,8 @@ SQLite does not support native Prisma enums, so category and section values are 
 | `DATABASE_URL` | SQLite database URL used by Prisma. | `file:./dev.db` |
 | `OPENAI_API_KEY` | OpenAI API key for generated briefs. | none |
 | `OPENAI_MODEL` | OpenAI model used for summarization. | `gpt-4.1-mini` |
+| `X_BEARER_TOKEN` | X API bearer token for recent-search ingestion. If omitted, X sources are skipped. | none |
+| `X_MAX_RESULTS` | Max tweets fetched per X source. X API supports 10-100. | `25` |
 | `MORNING_BRIEF_REFRESH_CRON` | Daily refresh cron expression. | `0 7 * * *` |
 | `MORNING_BRIEF_TIMEZONE` | Timezone for scheduled refresh. | `Asia/Karachi` |
 | `MORNING_BRIEF_LOOKBACK_HOURS` | Article lookback window for brief candidates. | `24` |

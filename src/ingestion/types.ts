@@ -4,7 +4,8 @@ export interface NewsSourceConfig {
   name: string;
   url: string;
   category: ArticleCategory;
-  kind: "rss" | "github-trending";
+  kind: "rss" | "github-trending" | "x-search";
+  query?: string;
 }
 
 export interface IngestedArticle {

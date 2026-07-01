@@ -6,6 +6,7 @@ import { scoreArticle } from "@/src/ingestion/ranking";
 import { newsSources } from "@/src/ingestion/sources/catalog";
 import { fetchGithubTrending } from "@/src/ingestion/sources/githubTrendingSource";
 import { fetchRssSource } from "@/src/ingestion/sources/rssSource";
+import { fetchXSearchSource } from "@/src/ingestion/sources/xSearchSource";
 import type { IngestedArticle, NewsSourceConfig } from "@/src/ingestion/types";
 import { logger } from "@/src/logging/logger";
 
@@ -49,7 +50,9 @@ export class NewsIngestor {
 
   private async fetchSourceSafely(source: NewsSourceConfig): Promise<IngestedArticle[]> {
     try {
-      return await (source.kind === "github-trending" ? fetchGithubTrending(source) : fetchRssSource(source));
+      if (source.kind === "github-trending") return await fetchGithubTrending(source);
+      if (source.kind === "x-search") return await fetchXSearchSource(source);
+      return await fetchRssSource(source);
     } catch (error) {
       logger.warn(`Failed to fetch ${source.name}`, error);
       return [];

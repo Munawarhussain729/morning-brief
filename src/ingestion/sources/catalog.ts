@@ -20,5 +20,26 @@ export const newsSources: NewsSourceConfig[] = [
   { name: "Google Security Blog", url: "https://security.googleblog.com/feeds/posts/default", category: "CYBERSECURITY", kind: "rss" },
   { name: "Hacker News", url: "https://news.ycombinator.com/rss", category: "TECH", kind: "rss" },
   { name: "Product Hunt", url: "https://www.producthunt.com/feed", category: "TRENDING_TOOLS", kind: "rss" },
-  { name: "GitHub Trending", url: "https://github.com/trending", category: "TRENDING_TOOLS", kind: "github-trending" }
+  { name: "GitHub Trending", url: "https://github.com/trending", category: "TRENDING_TOOLS", kind: "github-trending" },
+  {
+    name: "X AI Engineering",
+    url: "https://x.com/search?q=ai%20engineering",
+    category: "AI",
+    kind: "x-search",
+    query: '(("AI engineering" OR "LLM" OR "agents" OR "MCP" OR "OpenAI" OR "Anthropic") (launch OR release OR shipped OR research OR benchmark)) lang:en -is:retweet -is:reply'
+  },
+  {
+    name: "X Developer Tooling",
+    url: "https://x.com/search?q=developer%20tooling",
+    category: "DEVELOPMENT",
+    kind: "x-search",
+    query: '(("Next.js" OR React OR TypeScript OR Node.js OR Bun OR Vercel) (release OR launch OR stable OR beta OR performance)) lang:en -is:retweet -is:reply'
+  },
+  {
+    name: "X Cybersecurity",
+    url: "https://x.com/search?q=cybersecurity",
+    category: "CYBERSECURITY",
+    kind: "x-search",
+    query: '((CVE OR vulnerability OR "zero day" OR exploit OR ransomware) (critical OR patch OR disclosed OR detected)) lang:en -is:retweet -is:reply'
+  }
 ];
