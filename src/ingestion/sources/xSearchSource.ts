@@ -41,7 +41,8 @@ export async function fetchXSearchSource(source: NewsSourceConfig): Promise<Inge
       }
     });
     if (!response.ok) {
-      throw new Error(`X recent search failed for ${source.name}: ${response.status} ${response.statusText}`);
+      const body = await response.text().catch(() => "");
+      throw new Error(`X recent search failed for ${source.name}: ${response.status} ${response.statusText} — ${body}`);
     }
     return response.json() as Promise<XSearchResponse>;
   });

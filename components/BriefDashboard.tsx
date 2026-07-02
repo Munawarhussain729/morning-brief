@@ -88,11 +88,13 @@ const sections = [
 ];
 
 const allSectionsKey = "ALL";
+const allSourcesKey = "__all_sources__";
 
 export function BriefDashboard() {
   const [data, setData] = useState<BriefResponse>({ brief: null, history: [] });
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState(allSectionsKey);
+  const [activeSource, setActiveSource] = useState(allSourcesKey);
   const [selectedItem, setSelectedItem] = useState<BriefItem | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -113,16 +115,34 @@ export function BriefDashboard() {
     }, {});
   }, [allItems]);
 
+  const allSourceNames = useMemo(() => {
+    const names = new Set<string>();
+    allItems.forEach((item) => {
+      if (item.article?.source?.name) names.add(item.article.source.name);
+    });
+    return Array.from(names).sort();
+  }, [allItems]);
+
+  const sourceCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allItems.forEach((item) => {
+      const name = item.article?.source?.name ?? "";
+      counts[name] = (counts[name] ?? 0) + 1;
+    });
+    return counts;
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return allItems.filter((item) => {
       const tags = safeTags(item.tags).join(" ");
       const source = item.article?.source?.name ?? "";
       const matchesSection = activeSection === allSectionsKey || item.section === activeSection;
+      const matchesSource = activeSource === allSourcesKey || source === activeSource;
       const matchesQuery = !needle || `${item.title} ${item.summary} ${item.whyItMatters} ${tags} ${source}`.toLowerCase().includes(needle);
-      return matchesSection && matchesQuery;
+      return matchesSection && matchesSource && matchesQuery;
     });
-  }, [activeSection, allItems, query]);
+  }, [activeSection, activeSource, allItems, query]);
 
   const metrics = useMemo(() => {
     const sourceNames = new Set(allItems.map((item) => item.article?.source?.name).filter(Boolean));
@@ -279,6 +299,24 @@ export function BriefDashboard() {
             ))}
           </div>
 
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            <SourceTab
+              active={activeSource === allSourcesKey}
+              label="All Sources"
+              count={allItems.length}
+              onClick={() => setActiveSource(allSourcesKey)}
+            />
+            {allSourceNames.map((name) => (
+              <SourceTab
+                key={name}
+                active={activeSource === name}
+                label={name}
+                count={sourceCounts[name] ?? 0}
+                onClick={() => setActiveSource(name)}
+              />
+            ))}
+          </div>
+
           <section className="mt-7">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -334,6 +372,22 @@ function SectionButton({
       <Icon size={18} />
       <span className="flex-1 font-medium">{title}</span>
       <span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-white/20 text-white" : "bg-black/5 dark:bg-white/10"}`}>{count}</span>
+    </button>
+  );
+}
+
+function SourceTab({ active, label, count, onClick }: { active: boolean; label: string; count: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-medium transition ${
+        active
+          ? "border-signal bg-signal/10 text-signal dark:border-teal-300 dark:bg-teal-300/10 dark:text-teal-300"
+          : "border-black/10 bg-white/60 text-slate-600 hover:bg-white/90 dark:border-white/10 dark:bg-white/10 dark:text-slate-300"
+      }`}
+    >
+      {label} <span className="opacity-75">{count}</span>
     </button>
   );
 }
@@ -540,7 +594,7 @@ function EmptyState({ hasBrief, isRefreshing, onRefresh }: { hasBrief: boolean; 
     <div className="rounded-[1.75rem] border border-dashed border-black/15 bg-white/60 p-8 text-center dark:border-white/15 dark:bg-white/10">
       <h3 className="text-xl font-semibold">{hasBrief ? "No matching cards" : "No brief generated yet"}</h3>
       <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300">
-        {hasBrief ? "Try another section or search term." : "Run a refresh to collect, rank, summarize and store today's most important updates."}
+        {hasBrief ? "Try another section, source, or search term." : "Run a refresh to collect, rank, summarize and store today's most important updates."}
       </p>
       {!hasBrief ? (
         <button type="button" onClick={onRefresh} className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-signal px-5 py-3 text-sm font-semibold text-white" disabled={isRefreshing}>
